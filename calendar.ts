@@ -1,9 +1,6 @@
 
 import ical from "node-ical";
 import axios from "axios";
-import {
-  getDateForPageWithoutBrackets,
-} from "logseq-dateutils";
 import moment from "moment-timezone";
 import { insertJournalBlocks } from "./journal";
 
@@ -18,27 +15,7 @@ function sortDate(data) {
     );
   });
 }
-async function findDate(preferredDateFormat) {
-  if ((await logseq.Editor.getCurrentPage()) != null) {
-    //@ts-expect-error
-    if ((await logseq.Editor.getCurrentPage())["journal?"] == false) {
-      const date = getDateForPageWithoutBrackets(
-        new Date(),
-        preferredDateFormat
-      );
-      logseq.App.showMsg("Filtering Calendar Items for " + date);
-      // insertJournalBlocks(hello, preferredDateFormat, calendarName, settings, date)
-      return date;
-    } else {
-      //@ts-expect-error
-      const date = (await logseq.Editor.getCurrentPage()).name;
-      logseq.App.showMsg(`Filtering Calendar Items for ${date}`);
-      return date;
-    }
-  } else {
-    return getDateForPageWithoutBrackets(new Date(), preferredDateFormat);
-  }
-}
+
 function rawParser(rawData) {
   logseq.App.showMsg("Parsing Calendar Items");
   var eventsArray = [];
@@ -107,18 +84,14 @@ function rawParser(rawData) {
 
 export async function openCalendar2(calendarName, url) {
   try {
-    const userConfigs = await logseq.App.getUserConfigs();
-    const preferredDateFormat = userConfigs.preferredDateFormat;
     logseq.App.showMsg("Fetching Calendar Items");
     let response2 = await axios.get(url);
     console.log(response2);
     var hello = await rawParser(response2.data);
-    const date = await findDate(preferredDateFormat);
-    insertJournalBlocks(
+    // possible to await to retain exception handling behaviour from now inlined logseq operations
+    await insertJournalBlocks(
       hello,
-      preferredDateFormat,
-      calendarName,
-      date
+      calendarName
     );
   } catch (err) {
     if (`${err}` == `Error: Request failed with status code 404`) {

@@ -3,18 +3,18 @@ import "@logseq/libs";
 import { BlockEntity } from "@logseq/libs/dist/LSPlugin.user";
 import urlRegexSafe from 'url-regex-safe';
 import {
-    getDateForPage,
     getDateForPageWithoutBrackets,
   } from "logseq-dateutils";
 
-  
+
 export async function insertJournalBlocks(
     data,
-    preferredDateFormat: string,
     calendarName,
-    emptyToday,
     useCommonBlock = false
   ) {
+    const userConfigs = await logseq.App.getUserConfigs();
+    const preferredDateFormat = userConfigs.preferredDateFormat;
+    const emptyToday = await findDate(preferredDateFormat);
     // let emptyToday = (getDateForPageWithoutBrackets(new Date(), preferredDateFormat))
     console.log(`Current Date: ${emptyToday}`);
     let pageID = await logseq.Editor.createPage(emptyToday, {
@@ -89,6 +89,28 @@ export async function insertJournalBlocks(
     }
   }
   
+  async function findDate(preferredDateFormat) {
+    if ((await logseq.Editor.getCurrentPage()) != null) {
+      //@ts-expect-error
+      if ((await logseq.Editor.getCurrentPage())["journal?"] == false) {
+        const date = getDateForPageWithoutBrackets(
+          new Date(),
+          preferredDateFormat
+        );
+        logseq.App.showMsg("Filtering Calendar Items for " + date);
+        // insertJournalBlocks(hello, preferredDateFormat, calendarName, settings, date)
+        return date;
+      } else {
+        //@ts-expect-error
+        const date = (await logseq.Editor.getCurrentPage()).name;
+        logseq.App.showMsg(`Filtering Calendar Items for ${date}`);
+        return date;
+      }
+    } else {
+      return getDateForPageWithoutBrackets(new Date(), preferredDateFormat);
+    }
+  }
+
 async function formatTime(rawTimeStamp) {
     let formattedTimeStamp = new Date(rawTimeStamp);
     let initialHours = formattedTimeStamp.getHours();
