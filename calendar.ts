@@ -1,10 +1,9 @@
-
 import ical from "node-ical";
 import axios from "axios";
 import moment from "moment-timezone";
 import { insertJournalBlocks } from "./journal";
 
-let mainBlockUUID = ""
+let mainBlockUUID = "";
 // const md = require('markdown-it')().use(require('markdown-it-mark'));
 
 function sortDate(data) {
@@ -46,7 +45,7 @@ function rawParser(rawData) {
           // tzid present (calculate offset from recurrence start)
           const dateTimezone = moment.tz.zone("UTC");
           const localTimezone = moment.tz.guess();
-          
+
           const tz =
             event.rrule.origOptions.tzid === localTimezone
               ? event.rrule.origOptions.tzid
@@ -56,7 +55,7 @@ function rawParser(rawData) {
             timezone.utcOffset(date) - dateTimezone.utcOffset(date);
           // newDate = moment(date).add(offset, "minutes").toDate();
           // console.log(offset)
-          newDate = date
+          newDate = date;
           //FIXME: this is a hack to get around the fact that the offset is not being calculated correctly
         } else {
           // tzid not present (calculate offset from original start)
@@ -89,10 +88,7 @@ export async function openCalendar2(calendarName, url) {
     console.log(response2);
     var hello = await rawParser(response2.data);
     // possible to await to retain exception handling behaviour from now inlined logseq operations
-    await insertJournalBlocks(
-      hello,
-      calendarName
-    );
+    await insertJournalBlocks(hello, calendarName);
   } catch (err) {
     if (`${err}` == `Error: Request failed with status code 404`) {
       logseq.App.showMsg("Calendar not found: Check your URL");
